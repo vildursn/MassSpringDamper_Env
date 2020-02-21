@@ -1,6 +1,9 @@
 # Custom gym environment: Mass-spring-damper-system
+### TODO: Visualize spring and damper
 
-A custom made gym environment for the classic, super simple control problem of a mass spring damper system.
+A custom made gym environment for the classic, super simple control problem of a mass spring damper system. 
+
+
 
 1. Add `MassSpringDamper_env.py` to .../gym/envs/classic_control, ... being wherever your gym installation is.
 
