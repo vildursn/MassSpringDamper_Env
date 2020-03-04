@@ -62,7 +62,7 @@ class MassSpringDamperEnv(gym.Env):
 					if (np.abs(x_dot -x_dot_goal)< 0.005):
 						reward = 1000
 						done = True
-						#print("YAY! Stopped at right position - ",x,x_dot)
+						print("YAY! Stopped at right position - ",x,x_dot,self.steps_taken)
 			#return np.array(self.state), reward, done,  {}
 
 		if x < -self.x_treshold or x > self.x_treshold:
@@ -81,21 +81,18 @@ class MassSpringDamperEnv(gym.Env):
 		else:
 			self.steps_taken += 1
 			if self.steps_taken == 200:
-				self.done = True
 				done = True
 				self.steps_taken = None
-
 		return np.array(self.state), reward, done,  {}
 
 	def reset(self,goal_x=-2.0,goal_x_dot=0.0):
 		self.state = (np.random.uniform(low = -self.x_treshold/2.0, high = self.x_treshold/2.0),np.random.uniform(low = -0.01, high = 0.01))
-
+		self.steps_taken = None
 		self.steps_beyond_done = None
 		self.goal_state =(goal_x,goal_x_dot)
 		return np.array(self.state)
 
 	def render(self, mode='human'):
-		print("Rendering")
 		screen_width = 600
 		screen_height = 400
 
@@ -111,10 +108,18 @@ class MassSpringDamperEnv(gym.Env):
 			self.viewer = rendering.Viewer(screen_width, screen_height)
 			l,r,t,b = -mass_width/2, mass_width/2,mass_height/2, -mass_height/2
 			axleoffset = mass_height/4.0
+			goal_mass = rendering.FilledPolygon([(l,b),(l,t),(r,t),(r,b)])
+			goal_mass.set_color(100,0,0)
+			self.goal_mass_trans = rendering.Transform()
+			goal_mass.add_attr(self.goal_mass_trans)
+			self.viewer.add_geom(goal_mass)
+
 			mass = rendering.FilledPolygon([(l,b),(l,t),(r,t),(r,b)])
 			self.mass_trans = rendering.Transform()
 			mass.add_attr(self.mass_trans)
 			self.viewer.add_geom(mass)
+
+
 
 			self.track = rendering.Line((0,mass_y), (screen_width,mass_y))
 			self.track.set_color(0,0,0)
@@ -137,8 +142,10 @@ class MassSpringDamperEnv(gym.Env):
 		if self.state is None: return None
 
 		x = self.state
+		print(x, self.goal_state)
 		mass_x = x[0]*scale+screen_width/2.0 # MIDDLE OF MASS
 		self.mass_trans.set_translation(mass_x,mass_y)
+		self.goal_mass_trans.set_translation(self.goal_state[0]*scale + screen_width/2.0,mass_y)
 
 		return self.viewer.render(return_rgb_array = mode =='rgb_array')
 
