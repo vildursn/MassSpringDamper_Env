@@ -1,7 +1,11 @@
 # Custom gym environment: Mass-spring-damper-system
+
 ### TODO: Visualize spring and damper
 
+### OBS: Baselines/spinningups  PPO/TRPO/ACKTR does not take action limits into account. So must either change agent (clipping action), or the environmnet(allow all forces) for it to work.
+
 A custom made gym environment for the classic, super simple control problem of a mass spring damper system. 
+
 
 
 
