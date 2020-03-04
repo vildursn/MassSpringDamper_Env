@@ -36,6 +36,9 @@ class MassSpringDamperEnv(gym.Env):
 
 
 	def step(self, action):
+		if not self.action_space.contains(action):
+			print("ILLEGAL ACTION CLIPPED : ", action)
+			action = np.clip(action,-1,1)
 		assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
 		state = self.state
 		x, x_dot = state
@@ -52,21 +55,22 @@ class MassSpringDamperEnv(gym.Env):
 		#print("Reward = -(",x,"-",x_goal,"^2 - (" ,x_dot," -" ,x_dot_goal,")^2 = ", reward)
 		if (np.abs(x- x_goal) < 0.1):# and (np.abs(x_dot -x_dot_goal)< 0.01):
 			#print("YAY! Managed to arrive at righ.")
-			reward = 1
+			reward = -np.abs(x - x_goal)**2
 			if (np.abs(x_dot -x_dot_goal)< 0.1):
-				reward = 100
+				reward = np.array(100.0)
 				if (np.abs(x_dot -x_dot_goal)< 0.01):
 
 					#print("Getting there")
-					reward = 500
+					reward = np.array(500.0)
 					if (np.abs(x_dot -x_dot_goal)< 0.005):
-						reward = 1000
+						reward = 1000.0
 						done = True
 						print("YAY! Stopped at right position - ",x,x_dot,self.steps_taken)
 			#return np.array(self.state), reward, done,  {}
 
 		if x < -self.x_treshold or x > self.x_treshold:
-			reward = -100
+			print("Mass out of bounds!")
+			reward = np.array(-100.0)
 			done = True
 		if done:
 			if self.steps_beyond_done is None:
@@ -82,11 +86,12 @@ class MassSpringDamperEnv(gym.Env):
 			self.steps_taken += 1
 			if self.steps_taken == 200:
 				done = True
-				self.steps_taken = None
 		return np.array(self.state), reward, done,  {}
 
 	def reset(self,goal_x=-2.0,goal_x_dot=0.0):
 		self.state = (np.random.uniform(low = -self.x_treshold/2.0, high = self.x_treshold/2.0),np.random.uniform(low = -0.01, high = 0.01))
+		while np.abs(self.state[0] -goal_x)<0.1:
+			self.state = (np.random.uniform(low = -self.x_treshold/2.0, high = self.x_treshold/2.0),np.random.uniform(low = -0.01, high = 0.01))
 		self.steps_taken = None
 		self.steps_beyond_done = None
 		self.goal_state =(goal_x,goal_x_dot)
@@ -142,7 +147,7 @@ class MassSpringDamperEnv(gym.Env):
 		if self.state is None: return None
 
 		x = self.state
-		print(x, self.goal_state)
+		#print(x, self.goal_state)
 		mass_x = x[0]*scale+screen_width/2.0 # MIDDLE OF MASS
 		self.mass_trans.set_translation(mass_x,mass_y)
 		self.goal_mass_trans.set_translation(self.goal_state[0]*scale + screen_width/2.0,mass_y)
