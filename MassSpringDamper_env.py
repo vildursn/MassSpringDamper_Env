@@ -17,9 +17,9 @@ class MassSpringDamperEnv(gym.Env):
     }
 	def __init__(self): #, spring_stiffness, damper_factor, mass, max_force4
 		self.x_treshold = 4.8
-		self.spring_stiffness = 0.5 #spring_stiffness
+		self.spring_stiffness = 0.25 #spring_stiffness
 		self.damper_factor = 0.25 #damper_factor
-		self.mass = 1 #mass
+		self.mass = 0.25 #mass
 		self.max_force = np.array([1]) #max_force
 		self.step_length = 0.1 # in seconds
 
@@ -50,23 +50,14 @@ class MassSpringDamperEnv(gym.Env):
 
 		x_goal,x_dot_goal = self.goal_state
 		done = False
-		reward = -np.abs(x - x_goal)**2
+		reward = -np.abs(x - x_goal)**2-0.1*np.abs(action)-1
+		if (np.abs(x-x_goal) < 0.001) and (np.abs(x_dot_goal-x_dot) < 0.001):
+			reward = 1
 
-		#print("Reward = -(",x,"-",x_goal,"^2 - (" ,x_dot," -" ,x_dot_goal,")^2 = ", reward)
-		if (np.abs(x- x_goal) < 0.1):# and (np.abs(x_dot -x_dot_goal)< 0.01):
-			#print("YAY! Managed to arrive at righ.")
-			reward = -np.abs(x - x_goal)**2
-			if (np.abs(x_dot -x_dot_goal)< 0.1):
-				reward = np.array(100.0)
-				if (np.abs(x_dot -x_dot_goal)< 0.01):
-
-					#print("Getting there")
-					reward = np.array(500.0)
-					if (np.abs(x_dot -x_dot_goal)< 0.005):
-						reward = 1000.0
-						done = True
-						print("YAY! Stopped at right position - ",x,x_dot,self.steps_taken)
-			#return np.array(self.state), reward, done,  {}
+			#print(x_dot_goal-x_dot)
+			if (np.abs(x-x_goal) < 0.001) and (np.abs(x_dot_goal-x_dot) < 0.0001):
+				reward = 10
+				done= True
 
 		if x < -self.x_treshold or x > self.x_treshold:
 			print("Mass out of bounds!")
@@ -86,6 +77,8 @@ class MassSpringDamperEnv(gym.Env):
 			self.steps_taken += 1
 			if self.steps_taken == 200:
 				done = True
+
+				print("her steps taken : ",-np.abs(x - x_goal), x_dot)
 		return np.array(self.state), reward, done,  {}
 
 	def reset(self,goal_x=-2.0,goal_x_dot=0.0):
