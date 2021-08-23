@@ -51,8 +51,7 @@ class MassSpringDamperFullEnv_2(gym.Env):
         self.state = (x[0],x_dot[0],(x_goal-x[0]))
         done = False
         reward = -np.abs(x - x_goal)**2 - 1
-        if (np.abs(x- x_goal) < 0.01) and (np.abs(x_dot - x_dot_goal)< 0.01):# and (np.abs(x_dot -x_dot_goal)< 0.01):
-            #print("YAY! Managed to arrive at righ.")
+        if (np.abs(x- x_goal) < 0.01) and (np.abs(x_dot - x_dot_goal)< 0.01):
             reward = -np.abs(x_x_goal)**2
             if (np.abs(x- x_goal) < 0.01) and(np.abs(x_dot -x_dot_goal)< 0.001):
                 reward = 10
@@ -60,7 +59,6 @@ class MassSpringDamperFullEnv_2(gym.Env):
                 done = True
 
         if x < -self.x_treshold or x > self.x_treshold:
-            print("Mass out of bounds!")
             reward = np.array(-1000.0)
             done = True
         if done:
@@ -80,15 +78,15 @@ class MassSpringDamperFullEnv_2(gym.Env):
         return np.array(self.state), reward, done,  {}
 
     def reset(self):
-        self.state = (np.random.uniform(low = -self.x_treshold/2.0, high = self.x_treshold/2.0),0.0,np.random.rand()*2*(self.x_treshold-0.5)-(self.x_treshold-0.5),0.0)
+        self.state = (np.random.uniform(low = -self.x_treshold/2.0, high = self.x_treshold/2.0),0.0,np.random.rand()*2*(self.x_treshold-0.5)-(self.x_treshold-0.5))
         while (np.abs(self.state[0] -self.state[2])<1):
             self.state = (np.random.uniform(low = -self.x_treshold/2.0, high = self.x_treshold/2.0),np.random.uniform(low = -0.01, high = 0.01),np.random.rand()*2*(self.x_treshold-0.5)-(self.x_treshold-0.5),0.0)
-
-        goal_x = self.state[2]
-        goal_x_dot =self.state[3]
+        
+        goal_state = [np.random.rand()*2*(self.x_treshold-0.5)-(self.x_treshold-0.5),0.00]
+        self.goal_state =(goal_state[0], goal_state[1])
+        self.state[2] = self.goal_state[0] - self.state[0] 
         self.steps_taken = None
         self.steps_beyond_done = None
-        self.goal_state =(goal_x,goal_x_dot)
         return np.array(self.state)
 
     def render(self, mode='human'):
