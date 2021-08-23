@@ -48,4 +48,15 @@ env.close()
 
 ## Variations of environment
 
-### 
+### MassSpringDamper env
+Two states: position and velocity. Goal position is constant.
+
+### MassSpringDamper env 2
+Three states: position, velocity, and distance to goal point. Goal position is random.
+
+### MassSpringDamper env 3v
+Three states: position, velocity, and distance to goal point.
+
+### MassSpringDamper full env
+
+
