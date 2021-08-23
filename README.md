@@ -58,5 +58,6 @@ Three states: position, velocity, and distance to goal point. Goal position is r
 Three states: position, velocity, and distance to goal point.
 
 ### MassSpringDamper full env
+Four states : position, velocity, distance to goal point, and change in distance to goal point.
 
 
