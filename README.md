@@ -55,7 +55,7 @@ Two states: position and velocity. Goal position is constant.
 Three states: position, velocity, and distance to goal point. Goal position is random.
 
 ### MassSpringDamper env 3v
-Three states: position, velocity, and distance to goal point.
+Three states: position, velocity, and distance to goal point. Goal position is random, zero velocity desired.
 
 ### MassSpringDamper full env
 Four states : position, velocity, position goal, and desired speed at goal position.
