@@ -10,7 +10,7 @@ import numpy as np
 #import ros_message_listener.eavesdrop as eavesdrop
 #from ManipulatorAction import ManipulatorAction
 
-class MassSpringDamperFullEnv_2(gym.Env):
+class MassSpringDamperEnv(gym.Env):
     metadata = {
         'render.modes': ['human', 'rgb_array'],
         'video.frames_per_second' : 50
