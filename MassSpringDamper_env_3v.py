@@ -15,7 +15,9 @@ class MassSpringDamperFullEnv_2(gym.Env):
         'render.modes': ['human', 'rgb_array'],
         'video.frames_per_second' : 50
     }
-    def __init__(self, goal_x = -2.0, goal_x_dot = 0.00): #, spring_stiffness, damper_factor, mass, max_force4
+    def __init__(self,cont_actions_bool = True, reward_func = None): #, spring_stiffness, damper_factor, mass, max_force4
+        if cont_actions_bool == False:
+            logger.warn("You are calling cont_actions_bool == False(discrete actions), but this functionality is not finished. -- any further steps are undefined behavior.")
         self.x_treshold = 4.8
         self.spring_stiffness = 0.25 #spring_stiffness
         self.damper_factor = 0.25 #damper_factor
@@ -27,16 +29,45 @@ class MassSpringDamperFullEnv_2(gym.Env):
 
         self.observation_space = spaces.Box(-obs_high,obs_high, dtype=np.float32)
         self.action_space = spaces.Box(-self.max_force,self.max_force,dtype=np.float32)
-        self.state = None # Some random init here?
-        self.goal_state = (goal_x,goal_x_dot)  # Some position with no velocity
+        self.state = None # Position x, velocity x_dot, distance to goal point error
+        self.goal_state =  None # Some position with no velocity
+        if reward_func == None:
+            def r_f(x,x_dot,error):
+                if self.is_done():
+                    return 10, True
+                else:
+                    if self.is_terminated():
+                        return -100, True
+                    else:
+                        return -np.abs(error)**2 -1, False
+            self.reward_func = r_f
+        else:
+            self.reward_func = reward_func
+                
 
         self.viewer = None
         self.steps_taken = None
         self.steps_beyond_done = None
+        
+    def is_done(self):
+        state = self.state
+        x, x_dot, error = state
+        if (np.abs(error) < 0.01) and(np.abs(x_dot)< 0.001):
+           return True
+        else:
+           return False
+    
+    def is_terminated(self):
+        state = self.state
+        x, x_dot, error = state
+        if x < -self.x_treshold or x > self.x_treshold:
+            return True
+        else:
+            return False
+        
 
     def step(self, action):
         if not self.action_space.contains(action):
-            print("ILLEGAL ACTION CLIPPED : ", action)
             action = np.clip(action,-1,1)
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
         state = self.state
@@ -44,23 +75,15 @@ class MassSpringDamperFullEnv_2(gym.Env):
         acceleration = (-self.spring_stiffness*x -self.damper_factor*x_dot + action)/self.mass
 
         x_dot += acceleration*self.step_length
-        x += x_dot*self.step_length#!!
+        x += x_dot*self.step_length
 
         x_goal,x_dot_goal = self.goal_state
-
-        self.state = (x[0],x_dot[0],(x_goal-x[0]))
+        error = x_goal-x[0]
+        self.state = (x[0],x_dot[0],error)
         done = False
-        reward = -np.abs(x - x_goal)**2 - 1
-        if (np.abs(x- x_goal) < 0.01) and (np.abs(x_dot - x_dot_goal)< 0.01):
-            reward = -np.abs(x_x_goal)**2
-            if (np.abs(x- x_goal) < 0.01) and(np.abs(x_dot -x_dot_goal)< 0.001):
-                reward = 10
-                print("yay")
-                done = True
+        reward, done = self.reward_func(x,x_dot,error)
 
-        if x < -self.x_treshold or x > self.x_treshold:
-            reward = np.array(-1000.0)
-            done = True
+        
         if done:
             if self.steps_beyond_done is None:
                 self.steps_beyond_done = 0
@@ -78,13 +101,13 @@ class MassSpringDamperFullEnv_2(gym.Env):
         return np.array(self.state), reward, done,  {}
 
     def reset(self):
-        self.state = (np.random.uniform(low = -self.x_treshold/2.0, high = self.x_treshold/2.0),0.0,np.random.rand()*2*(self.x_treshold-0.5)-(self.x_treshold-0.5))
-        while (np.abs(self.state[0] -self.state[2])<1):
-            self.state = (np.random.uniform(low = -self.x_treshold/2.0, high = self.x_treshold/2.0),np.random.uniform(low = -0.01, high = 0.01),np.random.rand()*2*(self.x_treshold-0.5)-(self.x_treshold-0.5),0.0)
-        
-        goal_state = [np.random.rand()*2*(self.x_treshold-0.5)-(self.x_treshold-0.5),0.00]
+        goal_state = [np.random.uniform(low = -self.x_treshold/1.2, high = self.x_treshold/1.2),0.00]
         self.goal_state =(goal_state[0], goal_state[1])
-        self.state[2] = self.goal_state[0] - self.state[0] 
+        start_point = np.random.uniform(low = -self.x_treshold/1.5, high = self.x_treshold/1.5)
+        self.state = (start_point,0.0,goal_state[0]-start_point)
+        while (np.abs(self.state[2])<0.5):
+            start_point = np.random.uniform(low = -self.x_treshold/1.5, high = self.x_treshold/1.5)
+            self.state = (start_point,0.0,goal_state[0]-start_point)
         self.steps_taken = None
         self.steps_beyond_done = None
         return np.array(self.state)
